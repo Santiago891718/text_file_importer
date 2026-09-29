@@ -25,7 +25,7 @@
 import os
 
 from qgis.PyQt import uic
-from qgis.PyQt import QtWidgets
+from qgis.PyQt.QtWidgets import QDialog, QFileDialog
 
 # This loads your .ui file so that PyQt can populate your plugin with the elements from Qt Designer
 FORM_CLASS, _ = uic.loadUiType(
@@ -36,13 +36,23 @@ FORM_CLASS, _ = uic.loadUiType(
     import_from='text_file_importer')
 
 
-class TextFileImporterDialog(QtWidgets.QDialog, FORM_CLASS):
+class TextFileImporterDialog(QDialog, FORM_CLASS):
     def __init__(self, parent=None):
         """Constructor."""
         super(TextFileImporterDialog, self).__init__(parent)
+
         # Set up the user interface from Designer through FORM_CLASS.
         # After self.setupUi() you can access any designer object by doing
         # self.<objectname>, and you can use autoconnect slots - see
         # http://qt-project.org/doc/qt-4.8/designer-using-a-ui-file.html
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
+        self.Browse.clicked.connect(self.select_file) # Connect the Browse button to the select_file method
+
+    def select_file(self):
+        """Open a file dialog to select a text file."""
+        filename, _ = QFileDialog.getOpenFileName(
+            self, "Select Text File", "", "Text Files (*.txt *.csv);;All Files (*)"
+        )
+        if filename:
+            self.filePath.setText(filename)  # Set the selected file path in the QLineEdit
