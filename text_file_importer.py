@@ -218,8 +218,3 @@ class TextFileImporter:
         if not vector_layer.isValid():
             QMessageBox.critical(self.iface.mainWindow(), self.tr("Error"), self.tr("Failed to load the text file as a vector layer."))
             return
-
-        # Add the layer to the current project
-        QgsProject.instance().addMapLayer(vector_layer)
-       
-        
