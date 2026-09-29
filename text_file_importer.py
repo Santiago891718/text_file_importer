@@ -27,7 +27,8 @@ from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
 
 # Import the code for the dialog
-from .text_file_importer_dialog import TextFileImporterDialog
+from qgis.core import QgsProject, QgsVectorLayer
+import TextFileImporterDialog
 import os.path # for file path manipulations
 import os # for path manipulations
 
@@ -197,63 +198,28 @@ class TextFileImporter:
         if result:
             self.import_text_file()
 
-    def import_text_file(self):
-        """Reads the selected text file and creates a point layer from it."""
-        from qgis.core import (
-            QgsVectorLayer, QgsField, QgsFeature, QgsPointXY, QgsGeometry,
-            QgsProject
-        )
-        from qgis.PyQt.QtCore import QVariant
+    def import_text_file(self, file_path=None):
+        """Import a text file as a vector layer in QGIS.
 
-        file_path = self.dlg.mQgsFileWidget_input.filePath()
-        delimiter = self.dlg.comboBox_delimiter.currentText()
-        skip_lines = self.dlg.spinBox_skipLines.value()
-        crs = self.dlg.mQgsProjectionSelectionWidget_crs.crs()
-        layer_name = self.dlg.lineEdit_layerName.text() or "Imported points"
+        :param file_path: Optional path to the text file to import. If not provided, the user will be prompted to select a file.
+        :type file_path: str
+        """
+        if not file_path:
+            # Prompt user to select a text file
+            file_path, _ = QFileDialog.getOpenFileName(self.iface.mainWindow(), self.tr("Select Text File"), "", "Text Files (*.txt *.csv);;All Files (*)")
+            if not file_path:
+                return  # User cancelled the file selection
 
-        col_id = self.dlg.spinBox_colID.value()
-        col_x = self.dlg.spinBox_colX.value()
-        col_y = self.dlg.spinBox_colY.value()
-        col_z = self.dlg.spinBox_colZ.value()
-        col_code = self.dlg.spinBox_colCode.value()
-        col_pk = self.dlg.spinBox_colPK.value()
+        # Create a vector layer from the text file
+        uri = f"file:///{file_path}?delimiter=,&xField=longitude&yField=latitude"
+        layer_name = os.path.basename(file_path)
+        vector_layer = QgsVectorLayer(uri, layer_name, "delimitedtext")
 
-        # Create memory layer with fields matching your data
-        layer = QgsVectorLayer(f"PointZ?crs={crs.authid()}", layer_name, "memory")
-        provider = layer.dataProvider()
-        provider.addAttributes([
-            QgsField("id", QVariant.String),
-            QgsField("z", QVariant.Double),
-            QgsField("code", QVariant.String),
-            QgsField("pk", QVariant.String),
-        ])
-        layer.updateFields()
+        if not vector_layer.isValid():
+            QMessageBox.critical(self.iface.mainWindow(), self.tr("Error"), self.tr("Failed to load the text file as a vector layer."))
+            return
 
-        with open(file_path, "r", encoding="utf-8") as f:
-            lines = f.readlines()[skip_lines:]
-
-        features = []
-        for line in lines:
-            line = line.strip()
-            if not line:
-                continue
-            parts = line.split(delimiter if delimiter != "Tab" else "\t")
-            try:
-                pid = parts[col_id]
-                x = float(parts[col_x])
-                y = float(parts[col_y])
-                z = float(parts[col_z])
-                code = parts[col_code]
-                pk = parts[col_pk]
-            except (IndexError, ValueError):
-                continue  # skip malformed lines
-
-            feat = QgsFeature(layer.fields())
-            feat.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(x, y)))
-            feat.setAttributes([pid, z, code, pk])
-            features.append(feat)
-
-        provider.addFeatures(features)
-        layer.updateExtents()
-        QgsProject.instance().addMapLayer(layer)
+        # Add the layer to the current project
+        QgsProject.instance().addMapLayer(vector_layer)
+       
         
