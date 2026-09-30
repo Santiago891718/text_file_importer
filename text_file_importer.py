@@ -28,7 +28,7 @@ from qgis.PyQt.QtWidgets import QAction
 
 # Import the code for the dialog
 from qgis.core import QgsProject, QgsVectorLayer
-import TextFileImporterDialog
+from .text_file_importer_dialog import TextFileImporterDialog
 import os.path # for file path manipulations
 import os # for path manipulations
 
@@ -184,37 +184,90 @@ class TextFileImporter:
     def run(self):
         """Run method that performs all the real work"""
 
-        # Create the dialog with elements (after translation) and keep reference
-        # Only create GUI ONCE in callback, so that it will only load when the plugin is started
-        if self.first_start == True:
+        if self.first_start:
             self.first_start = False
             self.dlg = TextFileImporterDialog()
 
-        # show the dialog
-        self.dlg.show()
-        # Run the dialog event loop
+        self.dlg.show() #show the dialog
         result = self.dlg.exec_()
-        # See if OK was pressed
+
         if result:
-            self.import_text_file()
+          
+            file_path = self.dlg.filePath.text()
+            
+            if file_path:
+                
+                success = self.import_text_file(file_path)
+                if success:
+                    self.iface.messageBar().pushMessage(
+                        "Success", "Text data successfully loaded as a spatial temporary layer!", level=0
+                    )
+                else:
+                    self.iface.messageBar().pushMessage(
+                        "Error", "Could not parse file structure or coordinate attributes.", level=2
+                    )
+            else:
+                self.iface.messageBar().pushMessage(
+                    "Warning", "No file selected. Please choose a valid path.", level=1
+                )
+
 
     def import_text_file(self, file_path=None):
-        """Import a text file as a vector layer in QGIS.
 
-        :param file_path: Optional path to the text file to import. If not provided, the user will be prompted to select a file.
-        :type file_path: str
-        """
-        if not file_path:
-            # Prompt user to select a text file
-            file_path, _ = QFileDialog.getOpenFileName(self.iface.mainWindow(), self.tr("Select Text File"), "", "Text Files (*.txt *.csv);;All Files (*)")
-            if not file_path:
-                return  # User cancelled the file selection
+        if file_path is None or not os.path.exists(file_path):
+            return False
 
-        # Create a vector layer from the text file
-        uri = f"file:///{file_path}?delimiter=,&xField=longitude&yField=latitude"
-        layer_name = os.path.basename(file_path)
-        vector_layer = QgsVectorLayer(uri, layer_name, "delimitedtext")
+        with open(file_path, 'r', encoding='utf-8') as f: 
+            first_line = f.readline().strip()
 
-        if not vector_layer.isValid():
-            QMessageBox.critical(self.iface.mainWindow(), self.tr("Error"), self.tr("Failed to load the text file as a vector layer."))
-            return
+        if ';' in first_line:
+            delimiter = ';'
+        elif ',' in first_line:
+            delimiter = ','
+        elif ' ' in first_line:
+            delimiter = ' '
+        else:
+            delimiter = ';'  
+
+        options = [
+            f"delimiter={delimiter}",
+            "xField=field_2",
+            "yField=field_3",
+            "crs=EPSG:25832",  
+            "useHeader=No",    
+            "geomType=Point"
+        ]
+        
+       #Create a temporary table in QGIS
+        clean_path = file_path.replace(os.sep, '/')
+        # FIXED: Added [0] to extract just the string name from the tuple split layout
+        base_name = os.path.splitext(os.path.basename(file_path))[0]
+        layer_name = f"{base_name}_temporary"
+        
+        uri = f"file:///{clean_path}?{'&'.join(options)}"
+        
+        layer = QgsVectorLayer(uri, layer_name, "delimitedtext")
+        
+        if not layer.isValid():
+            return False
+
+        # --- OPTIONAL BONUS: RENAME COLUMNS TO PROFESSIONAL HEADERS ---
+        field_mapping = {
+            "field_1": "ID",
+            "field_2": "X",
+            "field_3": "Y",
+            "field_4": "Z",
+            "field_5": "Code",
+            "field_6": "Stationing"
+        }
+        
+        layer.startEditing()
+        for idx, field in enumerate(layer.fields()):
+            old_name = field.name()
+            if old_name in field_mapping:
+                layer.renameAttribute(idx, field_mapping[old_name])
+        layer.commitChanges()
+
+        # Load the newly created temporary layer onto the QGIS Map Canvas
+        QgsProject.instance().addMapLayer(layer)
+        return True
