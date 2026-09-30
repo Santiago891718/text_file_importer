@@ -238,7 +238,7 @@ class TextFileImporter:
             "geomType=Point"
         ]
         
-       #Create a temporary table in QGIS
+        #Create a temporary table in QGIS
         clean_path = file_path.replace(os.sep, '/')
         # FIXED: Added [0] to extract just the string name from the tuple split layout
         base_name = os.path.splitext(os.path.basename(file_path))[0]
@@ -251,7 +251,7 @@ class TextFileImporter:
         if not layer.isValid():
             return False
 
-        # --- OPTIONAL BONUS: RENAME COLUMNS TO PROFESSIONAL HEADERS ---
+        #Rename the fields to match the expected names in the QGIS layer
         field_mapping = {
             "field_1": "ID",
             "field_2": "X",
