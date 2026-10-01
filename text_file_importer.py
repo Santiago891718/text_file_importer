@@ -240,9 +240,9 @@ class TextFileImporter:
         
         #Create a temporary table in QGIS
         clean_path = file_path.replace(os.sep, '/')
-        # FIXED: Added [0] to extract just the string name from the tuple split layout
-        base_name = os.path.splitext(os.path.basename(file_path))[0]
-        layer_name = f"{base_name}_temporary"
+        
+        base_name = os.path.splitext(os.path.basename(file_path))[0] #add a base name for the layer to avoid conflicts
+        layer_name = f"{base_name}_temporary" #create a unique name for the layer "_temporary" to the base name of the file
         
         uri = f"file:///{clean_path}?{'&'.join(options)}"
         
