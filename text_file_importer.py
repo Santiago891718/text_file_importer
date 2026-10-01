@@ -231,11 +231,12 @@ class TextFileImporter:
 
         options = [
             f"delimiter={delimiter}",
-            "xField=field_2",
-            "yField=field_3",
+            "xField=X_Koordinate",
+            "yField=Y_Koordinate",
             "crs=EPSG:25832",  
-            "useHeader=No",    
-            "geomType=Point"
+            "useHeader=No", 
+            "fieldNames=Punktnummer,X_Koordinate,Y_Koordinate,Z_Koordinate,Punktcode,Stationierung",
+            "geomType=Point"           
         ]
         
         #Create a temporary table in QGIS
@@ -261,12 +262,12 @@ class TextFileImporter:
             "field_6": "Stationierung"
         }
         
-        layer.startEditing()
-        for idx, field in enumerate(layer.fields()):
-            old_name = field.name()
-            if old_name in field_mapping:
-                layer.renameAttribute(idx, field_mapping[old_name])
-        layer.commitChanges()
+        #layer.startEditing()
+        #for idx, field in enumerate(layer.fields()):
+        #    old_name = field.name()
+        #    if old_name in field_mapping:
+        #        layer.renameAttribute(idx, field_mapping[old_name])
+        #layer.commitChanges()
 
         # Load the newly created temporary layer onto the QGIS Map Canvas
         QgsProject.instance().addMapLayer(layer)
