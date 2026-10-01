@@ -146,7 +146,7 @@ class TextFileImporter:
             action.setWhatsThis(whats_this)
 
         if add_to_toolbar:
-            # Adds plugin icon to Plugins toolbar
+            
             self.iface.addToolBarIcon(action)
 
         if add_to_menu:
