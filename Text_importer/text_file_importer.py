@@ -253,21 +253,20 @@ class TextFileImporter:
 
         #Rename the fields to match the expected names in the QGIS layer
         field_mapping = {
-            "field_1": "ID",
-            "field_2": "X",
-            "field_3": "Y",
-            "field_4": "Z",
-            "field_5": "Code",
-            "field_6": "Stationing"
+            "field_1": "Punktnummer",
+            "field_2": "X_Koordinate",
+            "field_3": "Y_Koordinate",
+            "field_4": "Z_Koordinate",
+            "field_5": "Punktcode",
+            "field_6": "Stationierung",
         }
         
-        layer.startEditing()
         for idx, field in enumerate(layer.fields()):
             old_name = field.name()
             if old_name in field_mapping:
-                layer.renameAttribute(idx, field_mapping[old_name])
+                layer.setFieldAlias(idx, field_mapping[old_name])
         layer.commitChanges()
 
-        # Load the newly created temporary layer onto the QGIS Map Canvas
-        QgsProject.instance().addMapLayer(layer)
+        
+        QgsProject.instance().addMapLayer(layer) # Load the created temporary layer
         return True
