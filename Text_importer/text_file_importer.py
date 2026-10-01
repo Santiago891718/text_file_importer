@@ -253,12 +253,12 @@ class TextFileImporter:
 
         #Rename the fields to match the expected names in the QGIS layer
         field_mapping = {
-            "ID": "ID",
-            "X": "X",
-            "Y": "Y",
-            "Z": "Z",
-            "Code": "Code",
-            "Stationing": "Stationing"
+            "field_1": "ID",
+            "field_2": "X",
+            "field_3": "Y",
+            "field_4": "Z",
+            "field_5": "Code",
+            "field_6": "Stationing"
         }
         
         layer.startEditing()
