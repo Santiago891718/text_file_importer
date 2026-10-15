@@ -26,6 +26,7 @@ from qgis.core import QgsSettings
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
 
+
 # Import the code for the dialog
 from qgis.core import QgsProject, QgsVectorLayer
 from .text_file_importer_dialog import TextFileImporterDialog
@@ -212,15 +213,15 @@ class TextFileImporter:
                 )
 
 
-    def import_text_file(self, file_path=None):
+    def import_text_file(self, file_path=None): #In this part of the code, we will handle the import of the text file and create a temporary layer in QGIS
 
-        if file_path is None or not os.path.exists(file_path):
+        if file_path is None or not os.path.exists(file_path): # verify if the file path is valid
             return False
+        
+        with open(file_path, 'r', encoding='utf-8') as f: #here we open the file and read the first line to determine the delimiter used in the text file
+            first_line = f.readline().strip() 
 
-        with open(file_path, 'r', encoding='utf-8') as f: 
-            first_line = f.readline().strip()
-
-        if ';' in first_line:
+        if ';' in first_line: # look for the delimiter in the first line of the file
             delimiter = ';'
         elif ',' in first_line:
             delimiter = ','
@@ -229,6 +230,7 @@ class TextFileImporter:
         else:
             delimiter = ';'  
 
+    
         options = [
             f"delimiter={delimiter}",
             "xField=field_2",
@@ -238,14 +240,15 @@ class TextFileImporter:
             "geomType=Point"
         ]
         
+        
         #Create a temporary table in QGIS
         clean_path = file_path.replace(os.sep, '/')
         
         base_name = os.path.splitext(os.path.basename(file_path))[0] #add a base name for the layer to avoid conflicts
         layer_name = f"{base_name}_temporary" #create a unique name for the layer "_temporary" to the base name of the file
-        
+       
         uri = f"file:///{clean_path}?{'&'.join(options)}"
-        
+
         layer = QgsVectorLayer(uri, layer_name, "delimitedtext")
         
         if not layer.isValid():
@@ -265,7 +268,6 @@ class TextFileImporter:
             old_name = field.name()
             if old_name in field_mapping:
                 layer.setFieldAlias(idx, field_mapping[old_name])
-        layer.commitChanges()
 
         
         QgsProject.instance().addMapLayer(layer) # Load the created temporary layer
