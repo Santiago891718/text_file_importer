@@ -1,6 +1,6 @@
 import os # This is the home library of Python / allow you to work directly with Windows
 import sys # sys Import specific funktions
-from PyQt5.QtWidgets import QApplication, QDialog, QLineEdit, QPushButton
+from PyQt5.QtWidgets import QApplication, QDialog, QLineEdit, QPushButton #import the modules from PyQt5
 #from PyQt5.QtWidgets import QPushButton
 
 
@@ -22,8 +22,11 @@ class DlgMain(QDialog): # Classes can inherit from another class, where we defin
         self.ledText.move(40, 50) # Size of the Textbox
 
         self.btnUpdate = QPushButton("Update Window Title", self)
-        self.btnUpdate.move(70,70)
-        #self.btnUpdate.clicked.connect(self.evt_btnUpdate_clicked)
+        self.btnUpdate.move(45,70)
+        self.btnUpdate.clicked.connect(self.evt_btnUpdate_clicked) # create an event / when the button is clicked then we connect with a method.. right below 
+
+    def evt_btnUpdate_clicked(self): # Here we define a method, the same as we create a function
+        self.setWindowTitle(self.ledText.text())
 
 
 if __name__ == "__main__": # Python module can be imported from another python program / import modules and 
